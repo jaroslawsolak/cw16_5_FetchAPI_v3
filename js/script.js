@@ -1,102 +1,29 @@
-document.addEventListener('DOMContentLoaded', function () {
+var tweetLink = "https://twitter.com/intent/tweet?text=";
+var quoteUrl = "https://quotesondesign.com/wp-json/posts?filter[orderby]=rand&filter[posts_per_page]=1";
 
-	function randomString() {
-		var chars = '0123456789abcdefghiklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXTZ';
-		var str = '';
-		for (var i = 0; i < 10; i++) {
-			str += chars[Math.floor(Math.random() * chars.length)];
-		}
-		return str;
-	}
+function getQuote() {
+    fetch(quoteUrl, { cache: "no-store" })
+        .then(function(resp) {
+            return resp.json();
+        })
+        .then(createTweet);
+}
 
-	function generateTemplate(name, data, basicElement) {
-		var template = document.getElementById(name).innerHTML;
-		var element = document.createElement(basicElement || 'div');
+function createTweet(input) {
+    var data = input[0];
 
-		Mustache.parse(template);
-		element.innerHTML = Mustache.render(template, data);
+    var dataElement = document.createElement('div');
+    dataElement.innerHTML = data.content;
+    var quoteText = dataElement.innerText.trim();
+    var quoteAuthor = data.title;
 
-		return element;
-	}
+    if (!quoteAuthor.length) {
+        quoteAuthor = "Unknown author";
+    }
+}
 
-	function Column(name) {
-		var self = this;
+var tweetText = "Quote of the day - " + quoteText + " Author: " + quoteAuthor;
 
-		this.id = randomString();
-		this.name = name;
-		this.element = generateTemplate('column-template', {
-			name: this.name
-		});
-
-		this.element.querySelector('.column').addEventListener('click', function (event) {
-			if (event.target.classList.contains('btn-delete')) {
-				self.removeColumn();
-			}
-
-			if (event.target.classList.contains('add-card')) {
-				self.addCard(new Card(prompt("Enter the name of the card")));
-			}
-
-			Column.prototype = {
-				addCard: function (card) {
-					this.element.querySelector('ul').appendChild(card.element);
-				},
-				removeColumn: function () {
-					this.element.parentNode.removeChild(this.element);
-				}
-			};
-		});
-	}
-
-	function Card(description) {
-		var self = this;
-
-		this.id = randomString();
-		this.description = description;
-		this.element = generateTemplate('card-template', {
-			description: this.description
-		}, 'li');
-
-		this.element.querySelector('.card').addEventListener('click', function (event) {
-			event.stopPropagation();
-
-			if (event.target.classList.contains('btn-delete')) {
-				self.removeCard();
-			}
-
-			Card.prototype = {
-				removeCard: function () {
-					this.element.parentNode.removeChild(this.element);
-				}
-			}
-
-		});
-	}
-
-	var board = {
-		name: 'Kanban Board',
-		addColumn: function (column) {
-			this.element.appendChild(column.element);
-			initSortable(column.id); //About this feature we will tell later
-		},
-		element: document.querySelector('#board .column-container')
-	};
-
-	function initSortable(id) {
-		var el = document.getElementById(id);
-		var sortable = Sortable.create(el, {
-			group: 'kanban',
-			sort: true
-		});
-	}
-
-	document.querySelector('#board .create-column').addEventListener('click', function () {
-		var name = prompt('Enter a column name');
-		var column = new Column(name);
-		board.addColumn(column);
-	});
-
-
-
-
-});
+if (tweetText.length > 140) {
+    getQuote();
+}
