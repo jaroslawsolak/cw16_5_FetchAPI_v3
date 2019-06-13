@@ -1,1 +1,0 @@
-# cw15_6_WlasneTrello
